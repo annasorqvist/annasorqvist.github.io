@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MyFlow">
+<title>MyFlow</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f0e8;
+    --page: #fffdf8;
+    --page2: #fff9f0;
+    --border: #e8e0d0;
+    --border2: #d4c9b5;
+    --text: #2c2417;
+    --text2: #6b5d4a;
+    --muted: #a0927e;
+    --shadow: rgba(100,80,50,.10);
+    --shadow2: rgba(100,80,50,.18);
+    --accent: #e8823a;
+    --accent-soft: #fdf0e6;
+    --green: #4a9b6f;
+    --green-soft: #eaf5ee;
+    --blue: #4a7bbf;
+    --blue-soft: #eaf0fa;
+    --red: #c9445a;
+    --red-soft: #fceef1;
+    --yellow: #d4a017;
+    --purple: #7c5cbf;
+    --cat-personal: #7c5cbf;
+    --cat-health: #4a9b6f;
+    --cat-work: #4a7bbf;
+    --pri-high: #c9445a;
+    --pri-med: #d4a017;
+    --pri-low: #4a9b6f;
+    --radius: 18px;
+    --radius-sm: 12px;
+    --nav-h: 76px;
+    --tab-todo: #e8823a;
+    --tab-routines: #4a9b6f;
+    --tab-checklists: #4a7bbf;
+    --tab-goals: #c9445a;
+    --tab-stats: #7c5cbf;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    padding-bottom: var(--nav-h);
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(180,160,130,.07) 27px, rgba(180,160,130,.07) 28px);
+    pointer-events: none; z-index: 0;
+  }
+  nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: var(--nav-h);
+    background: var(--page);
+    border-top: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: space-around;
+    z-index: 100;
+    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -4px 20px var(--shadow);
+  }
+  .nav-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    background: none; border: none; color: var(--muted);
+    font-family: 'DM Sans', sans-serif; font-size: 10px; font-weight: 700;
+    padding: 8px 10px; border-radius: var(--radius-sm); cursor: pointer;
+    transition: color .2s, transform .15s;
+    text-transform: uppercase; letter-spacing: .5px; position: relative;
+  }
+  .nav-btn .icon { font-size: 20px; }
+  .nav-btn.active { color: var(--text); }
+  .nav-btn.active::after {
+    content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+    width: 24px; height: 3px; border-radius: 2px 2px 0 0;
+  }
+  .nav-btn[data-page="todo"].active::after { background: var(--tab-todo); }
+  .nav-btn[data-page="routines"].active::after { background: var(--tab-routines); }
+  .nav-btn[data-page="checklists"].active::after { background: var(--tab-checklists); }
+  .nav-btn[data-page="goals"].active::after { background: var(--tab-goals); }
+  .nav-btn[data-page="stats"].active::after { background: var(--tab-stats); }
+  .nav-btn:active { transform: scale(.92); }
+
+  .page { display: none; position: relative; z-index: 1; animation: fadeIn .2s ease; }
+  .page.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+  .page-bookmark { position: relative; padding: 52px 20px 24px; }
+  .bookmark-tab {
+    position: absolute; top: 0; left: 20px;
+    padding: 8px 20px 10px; border-radius: 0 0 14px 14px;
+    font-size: 11px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase;
+    color: #fff; font-family: 'DM Sans', sans-serif;
+  }
+  .page-title { font-family: 'Lora', serif; font-size: 30px; font-weight: 700; color: var(--text); line-height: 1.15; }
+  .page-subtitle { font-size: 13px; color: var(--muted); font-weight: 500; margin-top: 4px; }
+
+  .page-content {
+    background: var(--page);
+    margin: 0 12px;
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 20px 16px 32px;
+    min-height: calc(100vh - 200px);
+    box-shadow: 0 -2px 0 var(--border), 4px 0 12px var(--shadow), -4px 0 12px var(--shadow);
+    position: relative;
+  }
+  .page-content::before {
+    content: ''; position: absolute; top: 16px; bottom: 0; left: 38px;
+    width: 1px; background: rgba(200,150,120,.18); pointer-events: none;
+  }
+
+  .section-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 18px 0 10px; padding-left: 2px; }
+
+  .btn {
+    border: none; border-radius: var(--radius-sm); font-family: 'DM Sans', sans-serif;
+    font-weight: 700; cursor: pointer; transition: transform .15s, box-shadow .15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:active { transform: scale(.94); }
+  .btn-primary { background: var(--accent); color: #fff; padding: 13px 22px; font-size: 15px; border-radius: var(--radius); box-shadow: 0 3px 10px rgba(232,130,58,.28); }
+  .btn-icon { background: var(--page2); color: var(--text); padding: 10px; border-radius: 50%; font-size: 17px; width: 40px; height: 40px; justify-content: center; border: 1.5px solid var(--border); }
+  .btn-sm { padding: 7px 14px; font-size: 13px; border-radius: 10px; }
+  .btn-ghost { background: transparent; border: 1.5px solid var(--border2); color: var(--text2); padding: 7px 14px; font-size: 13px; }
+
+  .card { background: var(--page); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 10px; box-shadow: 0 2px 8px var(--shadow); }
+
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(44,36,23,.45); z-index: 200;
+    align-items: flex-end; justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--page); border-radius: 24px 24px 0 0;
+    padding: 8px 20px 44px; width: 100%; max-height: 92vh; overflow-y: auto;
+    animation: slideUp .25s ease; box-shadow: 0 -8px 40px var(--shadow2);
+  }
+  @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-title { font-family: 'Lora', serif; font-size: 22px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
+  .modal-handle { width: 36px; height: 4px; background: var(--border2); border-radius: 4px; margin: 12px auto 20px; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 7px; display: block; }
+  .form-input {
+    width: 100%; background: var(--bg); border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); color: var(--text); font-family: 'DM Sans', sans-serif;
+    font-size: 15px; padding: 12px 14px; outline: none; transition: border-color .2s, box-shadow .2s;
+  }
+  .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,130,58,.12); }
+  .form-input::placeholder { color: var(--muted); }
+  select.form-input { appearance: none; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip { padding: 7px 15px; border-radius: 20px; font-size: 13px; font-weight: 600; border: 1.5px solid var(--border); cursor: pointer; transition: all .15s; background: var(--bg); color: var(--text2); }
+  .chip.selected { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+
+  .pri-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .pri-high { background: var(--pri-high); }
+  .pri-med { background: var(--pri-med); }
+  .pri-low { background: var(--pri-low); }
+
+  .cat-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: capitalize; }
+  .cat-personal { background: rgba(124,92,191,.12); color: var(--cat-personal); }
+  .cat-health { background: rgba(74,155,111,.12); color: var(--cat-health); }
+  .cat-work { background: rgba(74,123,191,.12); color: var(--cat-work); }
+
+  .todo-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 13px 14px; background: var(--page);
+    border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    margin-bottom: 8px; transition: opacity .2s;
+    box-shadow: 0 1px 4px var(--shadow);
+  }
+  .todo-item.done { opacity: .5; }
+  .todo-item.done .todo-title { text-decoration: line-through; color: var(--muted); }
+  .todo-check {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--border2);
+    flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; transition: all .2s; margin-top: 1px; background: var(--bg);
+  }
+  .todo-check.checked { background: var(--green); border-color: var(--green); color: #fff; }
+  .todo-body { flex: 1; min-width: 0; }
+  .todo-title { font-size: 15px; font-weight: 600; margin-bottom: 5px; color: var(--text); }
+  .todo-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+  .todo-btn { background: none; border: none; color: var(--muted); font-size: 15px; cursor: pointer; padding: 3px; }
+
+  .subtasks { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .subtask { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text2); padding: 4px 0; cursor: pointer; }
+  .subtask-check { width: 15px; height: 15px; border-radius: 4px; border: 1.5px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; background: var(--bg); }
+  .subtask-check.checked { background: var(--green); border-color: var(--green); color: #fff; }
+  .subtask.done span { text-decoration: line-through; color: var(--muted); }
+
+  .list-card {
+    background: var(--page); border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+    padding: 16px; margin-bottom: 10px; cursor: pointer; transition: transform .15s;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 2px 8px var(--shadow);
+  }
+  .list-card:active { transform: scale(.97); }
+  .list-dot { width: 12px; height: 12px; border-radius: 50%; margin-right: 10px; flex-shrink: 0; }
+  .list-name { font-size: 16px; font-weight: 700; color: var(--text); }
+  .list-count { font-size: 12px; color: var(--muted); font-weight: 500; margin-top: 2px; }
+  .list-progress { height: 4px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .list-progress-fill { height: 100%; border-radius: 2px; transition: width .4s; }
+
+  .day-chip {
+    width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; cursor: pointer; border: 1.5px solid var(--border);
+    background: var(--bg); color: var(--text2); transition: all .15s;
+  }
+  .day-chip.on { background: var(--green); border-color: var(--green); color: #fff; }
+  .days-row { display: flex; gap: 7px; flex-wrap: wrap; }
+
+  .check-item { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .check-item:last-child { border-bottom: none; }
+  .check-box { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--border2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; background: var(--bg); }
+  .check-box.checked { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .check-text { font-size: 15px; font-weight: 500; flex: 1; color: var(--text); }
+  .check-item.done .check-text { text-decoration: line-through; color: var(--muted); }
+
+  .goal-item { background: var(--page); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 10px; box-shadow: 0 2px 8px var(--shadow); }
+  .goal-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; color: var(--text); }
+  .goal-progress-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 6px; }
+  .goal-progress-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), var(--red)); transition: width .4s; }
+  .goal-meta { font-size: 12px; color: var(--muted); font-weight: 600; display: flex; justify-content: space-between; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+  .stat-box { background: var(--page); border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 16px; text-align: center; box-shadow: 0 2px 8px var(--shadow); }
+  .stat-num { font-size: 30px; font-weight: 800; font-family: 'Lora', serif; }
+  .stat-label { font-size: 11px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .6px; margin-top: 3px; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 5px; height: 80px; margin-top: 10px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bar { width: 100%; border-radius: 5px 5px 0 0; background: var(--border); transition: height .4s; min-height: 4px; }
+  .bar.today { background: var(--accent); }
+  .bar-label { font-size: 10px; color: var(--muted); font-weight: 700; }
+
+  .due-tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+  .due-today { background: var(--accent-soft); color: var(--accent); }
+  .due-overdue { background: var(--red-soft); color: var(--red); }
+  .due-future { background: var(--green-soft); color: var(--green); }
+
+  .detail-header { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
+  .back-btn { background: var(--bg); border: 1.5px solid var(--border); color: var(--text2); font-size: 18px; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+
+  .gcal-notice { background: var(--blue-soft); border: 1.5px solid rgba(74,123,191,.2); border-radius: var(--radius-sm); padding: 11px 13px; font-size: 13px; color: var(--blue); font-weight: 600; margin-bottom: 14px; display: flex; gap: 8px; align-items: flex-start; }
+
+  .empty { text-align: center; padding: 40px 20px; color: var(--muted); }
+  .empty-icon { font-size: 44px; margin-bottom: 10px; }
+  .empty-text { font-size: 14px; font-weight: 600; }
+
+  #toast {
+    position: fixed; bottom: calc(var(--nav-h) + 16px); left: 50%; transform: translateX(-50%) translateY(16px);
+    background: var(--text); color: var(--bg); border-radius: var(--radius-sm);
+    padding: 10px 18px; font-size: 14px; font-weight: 700;
+    z-index: 300; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,.2);
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  ::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body>
+
+<!-- TODO -->
+<div class="page active" id="page-todo">
+  <div class="page-bookmark">
+    <div class="bookmark-tab" style="background:var(--tab-todo)">To-Do</div>
+    <div class="page-title">My Tasks</div>
+    <!-- Date Navigator -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;background:var(--page);border:1.5px solid var(--border);border-radius:var(--radius);padding:8px 12px;box-shadow:0 2px 8px var(--shadow)">
+      <button onclick="shiftDay(-1)" style="background:none;border:none;font-size:22px;color:var(--text2);cursor:pointer;padding:2px 6px;border-radius:8px;line-height:1" title="Previous day">‹</button>
+      <div style="text-align:center;flex:1">
+        <div id="todo-date-label" style="font-family:'Lora',serif;font-size:15px;font-weight:600;color:var(--text)"></div>
+        <div id="todo-day-label" style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-top:1px"></div>
+      </div>
+      <button onclick="shiftDay(1)" style="background:none;border:none;font-size:22px;color:var(--text2);cursor:pointer;padding:2px 6px;border-radius:8px;line-height:1" title="Next day">›</button>
+    </div>
+  </div>
+  <div class="page-content">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="section-label" style="margin-top:0">My Lists</div>
+      <button class="btn btn-icon" style="width:32px;height:32px;font-size:15px" onclick="openModal('modal-add-list')">＋</button>
+    </div>
+    <div id="lists-overview"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px">
+      <div class="section-label" id="today-section-label" style="margin-top:0">Today's Tasks</div>
+    </div>
+    <div id="today-tasks"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:10px;justify-content:center" onclick="openAddTask()">＋ Add Task</button>
+  </div>
+</div>
+
+<!-- LIST DETAIL -->
+<div class="page" id="page-list-detail">
+  <div class="page-bookmark" style="padding-top:56px">
+    <div class="bookmark-tab" id="detail-tab-label" style="background:var(--tab-todo)">List</div>
+    <div class="detail-header" style="margin-bottom:0">
+      <button class="back-btn" onclick="showPage('todo')">←</button>
+      <div>
+        <div class="page-title" id="detail-list-name" style="font-size:24px">List</div>
+        <div class="page-subtitle" id="detail-list-count"></div>
+      </div>
+    </div>
+  </div>
+  <div class="page-content">
+    <div id="detail-list-tasks"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:10px;justify-content:center" onclick="openAddTask(true)">＋ Add Task</button>
+  </div>
+</div>
+
+<!-- ROUTINES -->
+<div class="page" id="page-routines">
+  <div class="page-bookmark">
+    <div class="bookmark-tab" style="background:var(--tab-routines)">Routines</div>
+    <div class="page-title">Routines</div>
+    <div class="page-subtitle">Weekly repeating habits</div>
+  </div>
+  <div class="page-content">
+    <div class="gcal-notice">📅 Tap the calendar icon on any routine to add it to Google Calendar.</div>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-routine')">＋ New Routine</button>
+    </div>
+    <div id="routines-list"></div>
+  </div>
+</div>
+
+<!-- CHECKLISTS -->
+<div class="page" id="page-checklists">
+  <div class="page-bookmark">
+    <div class="bookmark-tab" style="background:var(--tab-checklists)">Checklists</div>
+    <div class="page-title">Checklists</div>
+    <div class="page-subtitle">Shopping, packing & more</div>
+  </div>
+  <div class="page-content">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-checklist')">＋ New List</button>
+    </div>
+    <div id="checklists-list"></div>
+  </div>
+</div>
+
+<!-- CHECKLIST DETAIL -->
+<div class="page" id="page-checklist-detail">
+  <div class="page-bookmark" style="padding-top:56px">
+    <div class="bookmark-tab" style="background:var(--tab-checklists)">Checklist</div>
+    <div class="detail-header" style="margin-bottom:0">
+      <button class="back-btn" onclick="showPage('checklists')">←</button>
+      <div>
+        <div class="page-title" id="checklist-detail-name" style="font-size:24px">Checklist</div>
+        <div class="page-subtitle" id="checklist-detail-count"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="clearChecked()">Clear done</button>
+    </div>
+  </div>
+  <div class="page-content">
+    <div id="checklist-detail-items"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <input class="form-input" id="new-check-item-input" placeholder="Add item…" style="flex:1" onkeydown="if(event.key==='Enter')addCheckItem()">
+      <button class="btn btn-primary btn-sm" onclick="addCheckItem()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- GOALS -->
+<div class="page" id="page-goals">
+  <div class="page-bookmark">
+    <div class="bookmark-tab" style="background:var(--tab-goals)">Goals</div>
+    <div class="page-title">Week Goals</div>
+    <div class="page-subtitle" id="goals-week-label"></div>
+  </div>
+  <div class="page-content">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
+      <button class="btn btn-primary btn-sm" onclick="openModal('modal-add-goal')">＋ New Goal</button>
+    </div>
+    <div id="goals-list"></div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="page" id="page-stats">
+  <div class="page-bookmark">
+    <div class="bookmark-tab" style="background:var(--tab-stats)">Stats</div>
+    <div class="page-title">Statistics</div>
+    <div class="page-subtitle">Your productivity story</div>
+  </div>
+  <div class="page-content">
+    <div id="stats-content"></div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <button class="nav-btn active" data-page="todo" onclick="showPage('todo')" id="nav-todo"><span class="icon">📋</span>To-Do</button>
+  <button class="nav-btn" data-page="routines" onclick="showPage('routines')" id="nav-routines"><span class="icon">🔄</span>Routines</button>
+  <button class="nav-btn" data-page="checklists" onclick="showPage('checklists')" id="nav-checklists"><span class="icon">✅</span>Lists</button>
+  <button class="nav-btn" data-page="goals" onclick="showPage('goals')" id="nav-goals"><span class="icon">🎯</span>Goals</button>
+  <button class="nav-btn" data-page="stats" onclick="showPage('stats')" id="nav-stats"><span class="icon">📊</span>Stats</button>
+</nav>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-add-task">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">New Task</div>
+    <div class="form-group"><label class="form-label">Task name</label><input class="form-input" id="task-name-input" placeholder="What needs to be done?"></div>
+    <div class="form-group"><label class="form-label">List</label><select class="form-input" id="task-list-select"></select></div>
+    <div class="form-group"><label class="form-label">Category</label>
+      <div class="chips" id="task-cat-chips">
+        <div class="chip" data-val="personal" onclick="selectChip(this,'task-cat')">Personal</div>
+        <div class="chip" data-val="health" onclick="selectChip(this,'task-cat')">Health</div>
+        <div class="chip" data-val="work" onclick="selectChip(this,'task-cat')">Work</div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Priority</label>
+      <div class="chips" id="task-pri-chips">
+        <div class="chip" data-val="high" onclick="selectChip(this,'task-pri')" style="color:var(--pri-high)">🔴 High</div>
+        <div class="chip selected" data-val="med" onclick="selectChip(this,'task-pri')" style="color:var(--pri-med)">🟡 Medium</div>
+        <div class="chip" data-val="low" onclick="selectChip(this,'task-pri')" style="color:var(--pri-low)">🟢 Low</div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Due date</label><input class="form-input" type="date" id="task-due-input"></div>
+    <div class="form-group"><label class="form-label">Subtasks (one per line)</label><textarea class="form-input" id="task-subtasks-input" rows="3" placeholder="Research&#10;Write draft&#10;Review"></textarea></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="closeModal('modal-add-task')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveTask()">Save Task</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-list">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">New List</div>
+    <div class="form-group"><label class="form-label">List name</label><input class="form-input" id="list-name-input" placeholder="e.g. Work Projects, Personal Goals…"></div>
+    <div class="form-group"><label class="form-label">Color</label>
+      <div class="chips" id="list-color-chips">
+        <div class="chip selected" data-val="#e8823a" onclick="selectChip(this,'list-color')" style="color:#e8823a;font-size:20px">●</div>
+        <div class="chip" data-val="#c9445a" onclick="selectChip(this,'list-color')" style="color:#c9445a;font-size:20px">●</div>
+        <div class="chip" data-val="#7c5cbf" onclick="selectChip(this,'list-color')" style="color:#7c5cbf;font-size:20px">●</div>
+        <div class="chip" data-val="#4a9b6f" onclick="selectChip(this,'list-color')" style="color:#4a9b6f;font-size:20px">●</div>
+        <div class="chip" data-val="#4a7bbf" onclick="selectChip(this,'list-color')" style="color:#4a7bbf;font-size:20px">●</div>
+        <div class="chip" data-val="#d4a017" onclick="selectChip(this,'list-color')" style="color:#d4a017;font-size:20px">●</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="closeModal('modal-add-list')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveList()">Create List</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-routine">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">New Routine</div>
+    <div class="form-group"><label class="form-label">Routine name</label><input class="form-input" id="routine-name-input" placeholder="e.g. Morning run, Read 30 min…"></div>
+    <div class="form-group"><label class="form-label">Category</label>
+      <div class="chips" id="routine-cat-chips">
+        <div class="chip" data-val="personal" onclick="selectChip(this,'routine-cat')">Personal</div>
+        <div class="chip" data-val="health" onclick="selectChip(this,'routine-cat')">Health</div>
+        <div class="chip" data-val="work" onclick="selectChip(this,'routine-cat')">Work</div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Repeat on days</label>
+      <div class="days-row" id="routine-days-row">
+        <div class="day-chip" data-day="0">Su</div><div class="day-chip" data-day="1">Mo</div>
+        <div class="day-chip" data-day="2">Tu</div><div class="day-chip" data-day="3">We</div>
+        <div class="day-chip" data-day="4">Th</div><div class="day-chip" data-day="5">Fr</div>
+        <div class="day-chip" data-day="6">Sa</div>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Time (optional)</label><input class="form-input" type="time" id="routine-time-input"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="closeModal('modal-add-routine')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveRoutine()">Save Routine</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-checklist">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">New Checklist</div>
+    <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="checklist-name-input" placeholder="e.g. Grocery, Packing, Wishlist…"></div>
+    <div class="form-group"><label class="form-label">Icon (emoji)</label><input class="form-input" id="checklist-icon-input" placeholder="🛒" maxlength="2"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="closeModal('modal-add-checklist')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveChecklist()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-goal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">New Week Goal</div>
+    <div class="form-group"><label class="form-label">Goal</label><input class="form-input" id="goal-name-input" placeholder="e.g. Finish Q3 report…"></div>
+    <div class="form-group"><label class="form-label">Steps to complete</label><input class="form-input" type="number" id="goal-target-input" placeholder="3" min="1" max="20"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost btn-sm" style="flex:1;justify-content:center" onclick="closeModal('modal-add-goal')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1;justify-content:center" onclick="saveGoal()">Save Goal</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script type="module">
+// ── FIREBASE SETUP ──
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDTtHPOi57dJKbVQCvGSlZ8msfWhlP5w78",
+  authDomain: "paijps.firebaseapp.com",
+  projectId: "paijps",
+  storageBucket: "paijps.firebasestorage.app",
+  messagingSenderId: "415483884489",
+  appId: "1:415483884489:web:ff2749f6a0964e442d2e18"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const DOC_REF = doc(db, 'myflow', 'data');
+
+// ── STATE ──
+let state = {
+  lists:[{id:'default',name:'My Tasks',color:'#e8823a'}],
+  tasks:[], routines:[], checklists:[], goals:[], history:[]
+};
+let currentListId=null, currentChecklistId=null, addingToDetail=false;
+let viewDayOffset=0;
+let saveTimer=null;
+
+// ── LOADING SCREEN ──
+function showLoader(msg='Loading…'){
+  let el=document.getElementById('app-loader');
+  if(!el){
+    el=document.createElement('div');
+    el.id='app-loader';
+    el.style.cssText='position:fixed;inset:0;background:var(--page);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-family:Lora,serif;';
+    el.innerHTML=`<div style="font-size:36px">📋</div><div style="font-size:16px;font-weight:600;color:var(--text2)" id="loader-msg">${msg}</div>`;
+    document.body.appendChild(el);
+  } else { document.getElementById('loader-msg').textContent=msg; }
+}
+function hideLoader(){ const el=document.getElementById('app-loader'); if(el) el.remove(); }
+
+// ── PERSIST (Firebase + localStorage fallback) ──
+async function save(){
+  // always save to localStorage immediately as a fallback
+  localStorage.setItem('myflow_v3',JSON.stringify(state));
+  // debounce Firebase writes to avoid hammering on rapid changes
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async()=>{
+    try{
+      await setDoc(DOC_REF, state);
+    } catch(e){
+      console.warn('Firebase save failed, using localStorage',e);
+    }
+  }, 800);
+}
+
+async function load(){
+  showLoader('Syncing your data…');
+  try{
+    const snap = await getDoc(DOC_REF);
+    if(snap.exists()){
+      state = snap.data();
+      toast('☁️ Synced from cloud');
+    } else {
+      // first time — try to migrate from localStorage
+      const local = localStorage.getItem('myflow_v3');
+      if(local){ state = JSON.parse(local); await setDoc(DOC_REF, state); toast('✅ Data migrated to cloud'); }
+    }
+  } catch(e){
+    console.warn('Firebase load failed, using localStorage',e);
+    const local = localStorage.getItem('myflow_v3');
+    if(local) state = JSON.parse(local);
+    toast('⚠️ Offline — using local data');
+  }
+  // ensure all keys exist
+  state.lists = state.lists||[{id:'default',name:'My Tasks',color:'#e8823a'}];
+  state.tasks = state.tasks||[]; state.routines = state.routines||[];
+  state.checklists = state.checklists||[]; state.goals = state.goals||[]; state.history = state.history||[];
+  hideLoader();
+  renderTodo();
+  document.getElementById('goals-week-label').textContent=getWeekLabel();
+  recordHistory();
+}
+
+// ── HELPERS ──
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2);}
+function today(){return new Date().toISOString().slice(0,10);}
+function todayDow(){return new Date().getDay();}
+function shiftDay(delta){viewDayOffset+=delta;renderTodo();}
+function viewDate(){const d=new Date();d.setDate(d.getDate()+viewDayOffset);return d.toISOString().slice(0,10);}
+function viewDow(){const d=new Date();d.setDate(d.getDate()+viewDayOffset);return d.getDay();}
+
+function formatDate(ds){
+  if(!ds)return'';
+  const diff=Math.floor((new Date(ds)-new Date(today()+'T00:00:00'))/86400000);
+  if(ds===today())return'Today';
+  if(diff===1)return'Tomorrow';
+  if(diff===-1)return'Yesterday';
+  if(diff<0)return`${Math.abs(diff)}d overdue`;
+  return new Date(ds+'T00:00:00').toLocaleDateString('en',{month:'short',day:'numeric'});
+}
+function dueCls(ds){
+  if(!ds)return'';
+  const diff=Math.floor((new Date(ds)-new Date(today()+'T00:00:00'))/86400000);
+  if(diff<0)return'due-overdue'; if(diff===0)return'due-today'; return'due-future';
+}
+function getWeekLabel(){
+  const now=new Date(),start=new Date(now); start.setDate(now.getDate()-now.getDay());
+  const end=new Date(start); end.setDate(start.getDate()+6);
+  return`${start.toLocaleDateString('en',{month:'short',day:'numeric'})} – ${end.toLocaleDateString('en',{month:'short',day:'numeric'})}`;
+}
+function recordHistory(){
+  const t=today(),all=getTodayTasks();
+  const rec={date:t,completed:all.filter(x=>x.done).length,total:all.length};
+  const i=state.history.findIndex(h=>h.date===t);
+  if(i>=0)state.history[i]=rec; else state.history.push(rec); save();
+}
+
+// ── PAGES ──
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const nb=document.getElementById('nav-'+name); if(nb)nb.classList.add('active');
+  if(name==='todo')renderTodo();
+  if(name==='routines')renderRoutines();
+  if(name==='checklists')renderChecklists();
+  if(name==='goals')renderGoals();
+  if(name==='stats')renderStats();
+}
+window.showPage=showPage;
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+window.openModal=openModal; window.closeModal=closeModal;
+document.querySelectorAll('.modal-overlay').forEach(o=>{o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});});
+function selectChip(el,group){el.closest('.chips').querySelectorAll('.chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');}
+function getChipVal(groupId){const s=document.querySelector(`#${groupId}-chips .chip.selected`);return s?s.dataset.val:null;}
+window.selectChip=selectChip;
+
+// ── TODO ──
+function getTodayTasks(){
+  const t=viewDate(),dow=viewDow();
+  const tasks=state.tasks.filter(t2=>!t2.routineId&&t2.date===t);
+  const routineTasks=state.routines.filter(r=>r.days.includes(dow)).map(r=>{
+    const ex=state.tasks.find(t2=>t2.routineId===r.id&&t2.date===t);
+    if(ex)return ex;
+    return{id:uid(),routineId:r.id,title:r.name,category:r.category,priority:'med',done:false,date:t,subtasks:[],listId:'default'};
+  });
+  return[...tasks,...routineTasks];
+}
+
+function renderTodo(){
+  const vd=viewDate(),isToday=vd===today();
+  const dateObj=new Date(vd+'T00:00:00');
+  let dayLbl=viewDayOffset===0?'Today':viewDayOffset===1?'Tomorrow':viewDayOffset===-1?'Yesterday':dateObj.toLocaleDateString('en',{weekday:'long'});
+  let fullLbl=dateObj.toLocaleDateString('en',{month:'long',day:'numeric',year:isToday?undefined:'numeric'});
+  document.getElementById('todo-date-label').textContent=fullLbl;
+  document.getElementById('todo-day-label').textContent=dayLbl;
+  document.getElementById('today-section-label').textContent=isToday?'Today\'s Tasks':`${dayLbl}'s Tasks`;
+
+  const lo=document.getElementById('lists-overview');
+  lo.innerHTML=state.lists.map(list=>{
+    const lt=state.tasks.filter(t=>t.listId===list.id&&!t.routineId);
+    const done=lt.filter(t=>t.done).length,pct=lt.length?Math.round(done/lt.length*100):0;
+    return`<div class="list-card" onclick="openListDetail('${list.id}')">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center"><div class="list-dot" style="background:${list.color}"></div>
+          <div><div class="list-name">${list.name}</div><div class="list-count">${done}/${lt.length} complete</div></div>
+        </div>
+        <div class="list-progress"><div class="list-progress-fill" style="width:${pct}%;background:${list.color}"></div></div>
+      </div>
+      <div style="color:var(--muted);font-size:22px;margin-left:10px">›</div>
+    </div>`;
+  }).join('')||'<div class="empty"><div class="empty-icon">📂</div><div class="empty-text">No lists yet</div></div>';
+
+  const tt=document.getElementById('today-tasks');
+  const all=getTodayTasks(),sorted=[...all.filter(t=>!t.done),...all.filter(t=>t.done)];
+  tt.innerHTML=sorted.length?sorted.map(t=>renderTaskItem(t)).join(''):`<div class="empty"><div class="empty-icon">🌿</div><div class="empty-text">Nothing for ${dayLbl.toLowerCase()}!</div></div>`;
+  document.getElementById('task-list-select').innerHTML=state.lists.map(l=>`<option value="${l.id}">${l.name}</option>`).join('');
+}
+
+function renderTaskItem(task){
+  const sub=task.subtasks||[],subDone=sub.filter(s=>s.done).length;
+  const catBadge=task.category?`<span class="cat-badge cat-${task.category}">${task.category}</span>`:'';
+  const dueLbl=task.date?`<span class="due-tag ${dueCls(task.date)}">${formatDate(task.date)}</span>`:'';
+  const subHtml=sub.length?`<div class="subtasks">${sub.map((s,si)=>`
+    <div class="subtask ${s.done?'done':''}" onclick="toggleSubtask('${task.id}',${si})">
+      <div class="subtask-check ${s.done?'checked':''}">${s.done?'✓':''}</div><span>${s.text}</span>
+    </div>`).join('')}
+    <div style="font-size:11px;color:var(--muted);margin-top:4px;font-weight:600">${subDone}/${sub.length} subtasks</div>
+  </div>`:'';
+  return`<div class="todo-item ${task.done?'done':''}">
+    <div class="todo-check ${task.done?'checked':''}" onclick="toggleTask('${task.id}')">${task.done?'✓':''}</div>
+    <div class="todo-body">
+      <div class="todo-title">${task.title}</div>
+      <div class="todo-meta"><div class="pri-dot pri-${task.priority||'med'}"></div>${catBadge}${dueLbl}</div>
+      ${subHtml}
+    </div>
+    <button class="todo-btn" onclick="deleteTask('${task.id}')">🗑</button>
+  </div>`;
+}
+
+function toggleTask(id){
+  let task=state.tasks.find(t=>t.id===id);
+  if(task){task.done=!task.done;}
+  else{const t=getTodayTasks().find(t=>t.id===id);if(t){t.done=true;state.tasks.push(t);}}
+  save();recordHistory();renderTodo();if(currentListId)renderListDetail(currentListId);
+}
+function toggleSubtask(taskId,idx){
+  let task=state.tasks.find(t=>t.id===taskId);
+  if(!task){const t=getTodayTasks().find(t=>t.id===taskId);if(t){state.tasks.push(t);task=t;}}
+  if(task&&task.subtasks[idx]){task.subtasks[idx].done=!task.subtasks[idx].done;save();renderTodo();if(currentListId)renderListDetail(currentListId);}
+}
+function deleteTask(id){state.tasks=state.tasks.filter(t=>t.id!==id);save();renderTodo();if(currentListId)renderListDetail(currentListId);}
+
+function openAddTask(inDetail=false){
+  addingToDetail=inDetail;
+  document.getElementById('task-name-input').value='';
+  document.getElementById('task-due-input').value=viewDate();
+  document.getElementById('task-subtasks-input').value='';
+  document.querySelectorAll('#task-cat-chips .chip,#task-pri-chips .chip').forEach(c=>c.classList.remove('selected'));
+  document.querySelector('#task-pri-chips .chip[data-val="med"]').classList.add('selected');
+  if(inDetail&&currentListId)document.getElementById('task-list-select').value=currentListId;
+  openModal('modal-add-task');
+}
+function saveTask(){
+  const name=document.getElementById('task-name-input').value.trim();if(!name){toast('Please enter a task name');return;}
+  const listId=document.getElementById('task-list-select').value||'default';
+  const cat=getChipVal('task-cat'),pri=getChipVal('task-pri')||'med';
+  const due=document.getElementById('task-due-input').value;
+  const stRaw=document.getElementById('task-subtasks-input').value.trim();
+  const subtasks=stRaw?stRaw.split('\n').filter(s=>s.trim()).map(s=>({text:s.trim(),done:false})):[];
+  state.tasks.push({id:uid(),title:name,listId,category:cat,priority:pri,date:due||null,done:false,subtasks,routineId:null});
+  save();closeModal('modal-add-task');renderTodo();if(addingToDetail&&currentListId)renderListDetail(currentListId);toast('Task added ✓');
+}
+
+function openListDetail(listId){
+  currentListId=listId;
+  const list=state.lists.find(l=>l.id===listId);
+  if(list){const tab=document.getElementById('detail-tab-label');if(tab)tab.style.background=list.color;}
+  showPage('list-detail');renderListDetail(listId);
+}
+function renderListDetail(listId){
+  const list=state.lists.find(l=>l.id===listId);if(!list)return;
+  const tasks=state.tasks.filter(t=>t.listId===listId&&!t.routineId);
+  document.getElementById('detail-list-name').textContent=list.name;
+  document.getElementById('detail-list-count').textContent=`${tasks.filter(t=>t.done).length}/${tasks.length} complete`;
+  const sorted=[...tasks.filter(t=>!t.done),...tasks.filter(t=>t.done)];
+  document.getElementById('detail-list-tasks').innerHTML=sorted.map(t=>renderTaskItem(t)).join('')
+    ||'<div class="empty"><div class="empty-icon">✨</div><div class="empty-text">No tasks yet</div></div>';
+}
+function saveList(){
+  const name=document.getElementById('list-name-input').value.trim();if(!name){toast('Enter a list name');return;}
+  const color=getChipVal('list-color')||'#e8823a';
+  state.lists.push({id:uid(),name,color});save();closeModal('modal-add-list');renderTodo();toast('List created ✓');
+}
+
+// ── ROUTINES ──
+function renderRoutines(){
+  const days=['Su','Mo','Tu','We','Th','Fr','Sa'];
+  const rl=document.getElementById('routines-list');
+  if(!state.routines.length){rl.innerHTML='<div class="empty"><div class="empty-icon">🌱</div><div class="empty-text">No routines yet!</div></div>';return;}
+  rl.innerHTML=state.routines.map(r=>{
+    const catCls=r.category?`cat-${r.category}`:'';
+    let streak=0;
+    const sortedH=[...state.history].sort((a,b)=>b.date.localeCompare(a.date));
+    for(const h of sortedH){
+      if(r.days.includes(new Date(h.date+'T00:00:00').getDay())){
+        const rt=state.tasks.find(tk=>tk.routineId===r.id&&tk.date===h.date);
+        if(rt&&rt.done)streak++;else break;
+      }
+    }
+    return`<div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)">${r.name}</div>
+          <div style="display:flex;gap:6px;align-items:center;margin-top:5px">
+            ${r.category?`<span class="cat-badge ${catCls}">${r.category}</span>`:''}
+            ${r.time?`<span style="font-size:12px;color:var(--muted)">⏰ ${r.time}</span>`:''}
+            <span style="font-size:12px;color:var(--accent);font-weight:700">🔥 ${streak} streak</span>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="todo-btn" onclick="syncRoutineGcal('${r.id}')">📅</button>
+          <button class="todo-btn" onclick="deleteRoutine('${r.id}')">🗑</button>
+        </div>
+      </div>
+      <div class="days-row">${days.map((d,i)=>`<div class="day-chip ${r.days.includes(i)?'on':''}" style="cursor:default">${d}</div>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+document.getElementById('routine-days-row').querySelectorAll('.day-chip').forEach(chip=>{chip.addEventListener('click',()=>chip.classList.toggle('on'));});
+function saveRoutine(){
+  const name=document.getElementById('routine-name-input').value.trim();if(!name){toast('Enter a routine name');return;}
+  const cat=getChipVal('routine-cat'),time=document.getElementById('routine-time-input').value;
+  const days=[...document.querySelectorAll('#routine-days-row .day-chip.on')].map(c=>parseInt(c.dataset.day));
+  if(!days.length){toast('Select at least one day');return;}
+  state.routines.push({id:uid(),name,category:cat,days,time:time||null});
+  save();closeModal('modal-add-routine');
+  document.getElementById('routine-name-input').value='';document.getElementById('routine-time-input').value='';
+  document.querySelectorAll('#routine-days-row .day-chip').forEach(c=>c.classList.remove('on'));
+  document.querySelectorAll('#routine-cat-chips .chip').forEach(c=>c.classList.remove('selected'));
+  renderRoutines();toast('Routine saved ✓');
+}
+function deleteRoutine(id){state.routines=state.routines.filter(r=>r.id!==id);state.tasks=state.tasks.filter(t=>t.routineId!==id);save();renderRoutines();}
+function syncRoutineGcal(routineId){
+  const r=state.routines.find(x=>x.id===routineId);if(!r)return;
+  const byday=r.days.map(d=>['SU','MO','TU','WE','TH','FR','SA'][d]).join(',');
+  const st=r.time?r.time.replace(':','')+'00':'080000';
+  const et=r.time?(String(parseInt(r.time.slice(0,2))+1).padStart(2,'0')+r.time.slice(2).replace(':','')+'00'):'090000';
+  const t=today().replace(/-/g,'');
+  window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(r.name)}&dates=${t}T${st}/${t}T${et}&recur=RRULE:FREQ=WEEKLY;BYDAY=${byday}&details=${encodeURIComponent('Added from MyFlow')}`,'_blank');
+  toast('Opening Google Calendar…');
+}
+
+// ── CHECKLISTS ──
+function renderChecklists(){
+  const cl=document.getElementById('checklists-list');
+  if(!state.checklists.length){cl.innerHTML='<div class="empty"><div class="empty-icon">📝</div><div class="empty-text">No checklists yet!</div></div>';return;}
+  cl.innerHTML=state.checklists.map(list=>{
+    const done=(list.items||[]).filter(i=>i.done).length,total=(list.items||[]).length;
+    const pct=total?Math.round(done/total*100):0;
+    return`<div class="list-card" onclick="openChecklistDetail('${list.id}')">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:24px">${list.icon||'📝'}</span>
+          <div><div class="list-name">${list.name}</div><div class="list-count">${done}/${total} checked</div></div>
+        </div>
+        <div class="list-progress" style="margin-top:8px"><div class="list-progress-fill" style="width:${pct}%;background:var(--blue)"></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;margin-left:10px">
+        <div style="color:var(--muted);font-size:22px">›</div>
+        <button class="todo-btn" onclick="event.stopPropagation();deleteChecklist('${list.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function saveChecklist(){
+  const name=document.getElementById('checklist-name-input').value.trim();if(!name){toast('Enter a name');return;}
+  const icon=document.getElementById('checklist-icon-input').value.trim()||'📝';
+  state.checklists.push({id:uid(),name,icon,items:[]});save();closeModal('modal-add-checklist');
+  document.getElementById('checklist-name-input').value='';document.getElementById('checklist-icon-input').value='';
+  renderChecklists();toast('Checklist created ✓');
+}
+function deleteChecklist(id){state.checklists=state.checklists.filter(c=>c.id!==id);save();renderChecklists();}
+function openChecklistDetail(id){currentChecklistId=id;showPage('checklist-detail');renderChecklistDetail();}
+function renderChecklistDetail(){
+  const list=state.checklists.find(c=>c.id===currentChecklistId);if(!list)return;
+  document.getElementById('checklist-detail-name').textContent=`${list.icon} ${list.name}`;
+  const items=list.items||[];
+  document.getElementById('checklist-detail-count').textContent=`${items.filter(i=>i.done).length}/${items.length} checked`;
+  const sorted=[...items.filter(i=>!i.done),...items.filter(i=>i.done)];
+  document.getElementById('checklist-detail-items').innerHTML=sorted.map(item=>{
+    const idx=items.indexOf(item);
+    return`<div class="check-item ${item.done?'done':''}" onclick="toggleCheckItem(${idx})">
+      <div class="check-box ${item.done?'checked':''}">${item.done?'✓':''}</div>
+      <span class="check-text">${item.text}</span>
+      <button class="todo-btn" onclick="event.stopPropagation();removeCheckItem(${idx})">🗑</button>
+    </div>`;
+  }).join('')||'<div class="empty" style="padding:20px"><div class="empty-text">Add items below ↓</div></div>';
+}
+function toggleCheckItem(idx){const l=state.checklists.find(c=>c.id===currentChecklistId);if(!l)return;l.items[idx].done=!l.items[idx].done;save();renderChecklistDetail();}
+function removeCheckItem(idx){const l=state.checklists.find(c=>c.id===currentChecklistId);if(!l)return;l.items.splice(idx,1);save();renderChecklistDetail();}
+function addCheckItem(){
+  const inp=document.getElementById('new-check-item-input'),text=inp.value.trim();if(!text)return;
+  const l=state.checklists.find(c=>c.id===currentChecklistId);if(!l)return;
+  l.items.push({text,done:false});save();inp.value='';renderChecklistDetail();
+}
+function clearChecked(){const l=state.checklists.find(c=>c.id===currentChecklistId);if(!l)return;l.items=l.items.filter(i=>!i.done);save();renderChecklistDetail();toast('Done items cleared');}
+
+// ── GOALS ──
+function renderGoals(){
+  document.getElementById('goals-week-label').textContent=getWeekLabel();
+  const gl=document.getElementById('goals-list');
+  if(!state.goals.length){gl.innerHTML='<div class="empty"><div class="empty-icon">🎯</div><div class="empty-text">Set your goals for this week!</div></div>';return;}
+  gl.innerHTML=state.goals.map(g=>{
+    const pct=g.target?Math.round(Math.min(g.progress/g.target,1)*100):0;
+    return`<div class="goal-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div class="goal-title">${g.name}</div>
+        <button class="todo-btn" onclick="deleteGoal('${g.id}')">🗑</button>
+      </div>
+      <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:${pct}%"></div></div>
+      <div class="goal-meta"><span>${g.progress}/${g.target} steps</span><span>${pct}% ${pct>=100?'🎉':''}</span></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn btn-ghost btn-sm" onclick="stepGoal('${g.id}',-1)">− Step</button>
+        <button class="btn btn-primary btn-sm" onclick="stepGoal('${g.id}',1)">+ Step</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function saveGoal(){
+  const name=document.getElementById('goal-name-input').value.trim();if(!name){toast('Enter a goal');return;}
+  const target=parseInt(document.getElementById('goal-target-input').value)||1;
+  state.goals.push({id:uid(),name,target,progress:0,week:getWeekLabel()});save();closeModal('modal-add-goal');
+  document.getElementById('goal-name-input').value='';document.getElementById('goal-target-input').value='';
+  renderGoals();toast('Goal set ✓');
+}
+function stepGoal(id,delta){const g=state.goals.find(x=>x.id===id);if(!g)return;g.progress=Math.max(0,Math.min(g.target,g.progress+delta));save();renderGoals();if(g.progress>=g.target)toast('🎉 Goal complete!');}
+function deleteGoal(id){state.goals=state.goals.filter(g=>g.id!==id);save();renderGoals();}
+
+// ── STATS ──
+function renderStats(){
+  const sc=document.getElementById('stats-content');
+  const allTasks=state.tasks.filter(t=>!t.routineId);
+  const totalDone=allTasks.filter(t=>t.done).length,totalTasks=allTasks.length;
+  const routineDone=state.tasks.filter(t=>t.routineId&&t.done).length;
+  const last7=[];
+  for(let i=6;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const ds=d.toISOString().slice(0,10),h=state.history.find(x=>x.date===ds);
+    last7.push({label:['Su','Mo','Tu','We','Th','Fr','Sa'][d.getDay()],completed:h?h.completed:0,isToday:ds===today()});
+  }
+  const maxBar=Math.max(...last7.map(d=>d.completed),1);
+  let streak=0;
+  for(let i=0;i<30;i++){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);const h=state.history.find(x=>x.date===ds);if(h&&h.completed>0)streak++;else if(i>0)break;}
+  const rate=totalTasks?Math.round(totalDone/totalTasks*100):0;
+  sc.innerHTML=`
+    <div class="stat-grid">
+      <div class="stat-box"><div class="stat-num" style="color:var(--accent)">${totalDone}</div><div class="stat-label">Tasks Done</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:var(--green)">${rate}%</div><div class="stat-label">Completion</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:var(--red)">${streak}</div><div class="stat-label">Day Streak 🔥</div></div>
+      <div class="stat-box"><div class="stat-num" style="color:var(--blue)">${routineDone}</div><div class="stat-label">Routines Done</div></div>
+    </div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:2px">Last 7 Days</div>
+      <div class="bar-chart">
+        ${last7.map(d=>`<div class="bar-col">
+          <div class="bar ${d.isToday?'today':''}" style="height:${d.completed?Math.round(d.completed/maxBar*64)+4:4}px"></div>
+          <div class="bar-label">${d.label}</div>
+        </div>`).join('')}
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:14px">By Category</div>
+      ${['personal','health','work'].map(cat=>{
+        const ct=allTasks.filter(t=>t.category===cat),cd=ct.filter(t=>t.done).length;
+        const pct=ct.length?Math.round(cd/ct.length*100):0;
+        const colors={personal:'var(--cat-personal)',health:'var(--cat-health)',work:'var(--cat-work)'};
+        return`<div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px">
+            <span style="text-transform:capitalize;color:var(--text)">${cat}</span>
+            <span style="color:var(--muted)">${cd}/${ct.length}</span>
+          </div>
+          <div style="height:7px;background:var(--border);border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:${colors[cat]};border-radius:4px;transition:width .4s"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:12px">Week Goals</div>
+      ${state.goals.length?state.goals.map(g=>{
+        const pct=g.target?Math.round(Math.min(g.progress/g.target,1)*100):0;
+        return`<div style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px;color:var(--text)">
+            <span>${g.name}</span><span style="color:var(--muted)">${pct}%</span>
+          </div>
+          <div style="height:7px;background:var(--border);border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--accent),var(--red));border-radius:4px"></div>
+          </div>
+        </div>`;
+      }).join(''):'<div style="color:var(--muted);font-size:14px">No goals set this week</div>'}
+    </div>`;
+}
+
+// ── TOAST ──
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+
+// ── EXPOSE GLOBALS (needed because script is type=module) ──
+window.shiftDay=shiftDay;
+window.openAddTask=openAddTask; window.saveTask=saveTask;
+window.toggleTask=toggleTask; window.toggleSubtask=toggleSubtask; window.deleteTask=deleteTask;
+window.openListDetail=openListDetail; window.saveList=saveList;
+window.saveRoutine=saveRoutine; window.deleteRoutine=deleteRoutine; window.syncRoutineGcal=syncRoutineGcal;
+window.saveChecklist=saveChecklist; window.deleteChecklist=deleteChecklist;
+window.openChecklistDetail=openChecklistDetail; window.toggleCheckItem=toggleCheckItem;
+window.removeCheckItem=removeCheckItem; window.addCheckItem=addCheckItem; window.clearChecked=clearChecked;
+window.saveGoal=saveGoal; window.stepGoal=stepGoal; window.deleteGoal=deleteGoal;
+
+// ── INIT ──
+load();
+</script>
+</body>
+</html>
